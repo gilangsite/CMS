@@ -111,12 +111,16 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
     const failed = results.find((result) => !result.success)
     if (failed) {
-      return apiError(
-        failed.errorMessage ?? 'The social platform rejected the publish request.',
-        502,
+      const primaryError = failed.errorMessage ?? 'The social platform rejected the publish request.'
+      const additionalErrors = [...new Set(
         results
           .filter((result) => result.errorMessage)
           .map((result) => result.errorMessage as string)
+      )].filter((message) => message !== primaryError)
+      return apiError(
+        primaryError,
+        502,
+        additionalErrors
       )
     }
 

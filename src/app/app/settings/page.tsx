@@ -325,7 +325,14 @@ export default function SettingsPage() {
           {activeTab === "publishing" && (
             <section className="surface-base p-6 space-y-4">
               <h2 className="text-base font-semibold text-text-primary">Active Publishing Rules</h2>
-              <Fact label="Schedule processor" value="External trigger · every minute" />
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                <p className="text-sm font-medium text-text-primary">Vercel Hobby requires an external schedule trigger</p>
+                <p className="text-xs text-text-tertiary mt-1 leading-relaxed">
+                  Auto Post controls how the platform publishes. Scheduled publishing only runs automatically after
+                  a service such as cron-job.org calls the publishing endpoint every minute.
+                </p>
+              </div>
+              <Fact label="Schedule processor" value="External trigger required" />
               <Fact label="Media Trash cleanup" value="Vercel · once daily" />
               <Fact label="Missed schedules" value="Fail safely after 24 hours" />
               <Fact label="Instagram media" value="Public URL with automatic JPEG normalization" />

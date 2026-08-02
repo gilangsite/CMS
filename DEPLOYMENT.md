@@ -15,6 +15,11 @@ DATABASE_URL
 TOKEN_ENCRYPTION_KEY
 BLOB_READ_WRITE_TOKEN
 CRON_SECRET
+NEXT_PUBLIC_APP_URL
+META_APP_ID
+META_APP_SECRET
+META_CONFIG_ID
+META_REDIRECT_URI
 ```
 
 Pastikan semua variabel diaktifkan untuk environment **Production**, kemudian lakukan redeploy. Setelah deploy, buka `https://domain-aplikasi.vercel.app/api/health`. Respons `status: ready` berarti konfigurasi utama dan koneksi database sudah bekerja.

@@ -43,7 +43,7 @@ export default function RootLayout({
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-warning">Deployment setup required</p>
               <h1 className="text-2xl font-semibold mt-3">The website was deployed, but its cloud connection is incomplete.</h1>
               <p className="text-sm text-text-secondary mt-3 leading-relaxed">
-                Add the missing variables below in Vercel under Project Settings → Environment Variables,
+                Add or correct the variables below in Vercel under Project Settings → Environment Variables,
                 enable them for Production, and redeploy. Secret values are never stored in GitHub.
               </p>
               <ul className="mt-5 space-y-2">
