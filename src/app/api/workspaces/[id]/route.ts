@@ -16,8 +16,12 @@ interface Params {
 }
 
 const updateWorkspaceSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-})
+  name: z.string().trim().min(1).max(120).optional(),
+  mediaTrashRetentionDays: z.union([z.literal(7), z.literal(30)]).optional(),
+}).refine(
+  (data) => data.name !== undefined || data.mediaTrashRetentionDays !== undefined,
+  { message: 'At least one workspace setting is required' }
+)
 
 export async function PATCH(request: Request, { params }: Params) {
   try {
@@ -36,12 +40,39 @@ export async function PATCH(request: Request, { params }: Params) {
       return apiError('Insufficient permissions to edit this workspace', 403)
     }
     const parsed = updateWorkspaceSchema.safeParse(await request.json())
-    if (!parsed.success) return apiError('Workspace name is invalid')
+    if (!parsed.success) return apiError('Workspace settings are invalid')
 
-    const updated = await prisma.workspace.update({
-      where: { id },
-      data: { name: parsed.data.name },
-      select: { id: true, name: true, slug: true },
+    const updated = await prisma.$transaction(async (transaction) => {
+      const nextWorkspace = await transaction.workspace.update({
+        where: { id },
+        data: parsed.data,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          mediaTrashRetentionDays: true,
+        },
+      })
+
+      if (parsed.data.mediaTrashRetentionDays !== undefined) {
+        const trashedAssets = await transaction.mediaAsset.findMany({
+          where: { workspaceId: id, deletedAt: { not: null } },
+          select: { id: true, deletedAt: true },
+        })
+        for (const asset of trashedAssets) {
+          if (!asset.deletedAt) continue
+          await transaction.mediaAsset.update({
+            where: { id: asset.id },
+            data: {
+              purgeAfter: new Date(
+                asset.deletedAt.getTime() + parsed.data.mediaTrashRetentionDays * 24 * 60 * 60 * 1000
+              ),
+            },
+          })
+        }
+      }
+
+      return nextWorkspace
     })
     return apiSuccess(updated)
   } catch (error: unknown) {

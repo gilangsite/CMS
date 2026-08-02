@@ -6,6 +6,7 @@ export interface RealWorkspace {
   id: string;
   name: string;
   slug: string;
+  mediaTrashRetentionDays: number;
 }
 
 export interface RealBrand {
@@ -64,10 +65,15 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       setLoading(true);
-      const workspaces = await fetchJson<{ id: string; name: string; slug: string }[]>("/api/workspaces");
+      const workspaces = await fetchJson<RealWorkspace[]>("/api/workspaces");
       const ws = workspaces?.[0] ?? null;
       if (cancelled) return;
-      setWorkspace(ws ? { id: ws.id, name: ws.name, slug: ws.slug } : null);
+      setWorkspace(ws ? {
+        id: ws.id,
+        name: ws.name,
+        slug: ws.slug,
+        mediaTrashRetentionDays: ws.mediaTrashRetentionDays ?? 30,
+      } : null);
 
       if (ws) {
         const rawBrands = await fetchJson<{ id: string; name: string; description: string | null }[]>(

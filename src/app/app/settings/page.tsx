@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import {
   Building2,
   CheckCircle2,
+  Clock3,
+  HardDrive,
   KeyRound,
   Loader2,
   Palette,
@@ -11,6 +13,7 @@ import {
   Send,
   Shield,
   Smartphone,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,6 +37,9 @@ export default function SettingsPage() {
   const [savingWorkspace, setSavingWorkspace] = useState(false);
   const [brandName, setBrandName] = useState("");
   const [savingBrand, setSavingBrand] = useState(false);
+  const [retentionOverride, setRetentionOverride] = useState<7 | 30 | null>(null);
+  const [savingStorage, setSavingStorage] = useState(false);
+  const retentionDays = retentionOverride ?? (workspace?.mediaTrashRetentionDays === 7 ? 7 : 30);
 
   useEffect(() => {
     if (!workspace) return;
@@ -100,10 +106,39 @@ export default function SettingsPage() {
     }
   };
 
+  const saveStorageSettings = async () => {
+    if (!workspace) return;
+    setSavingStorage(true);
+    try {
+      const response = await fetch(`/api/workspaces/${workspace.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaTrashRetentionDays: retentionDays }),
+      });
+      const json = await response.json();
+      if (!json.success) throw new Error(json.error ?? "Unable to update storage settings");
+      setRetentionOverride(null);
+      refetchBrands();
+      toast({
+        title: "Storage settings updated",
+        description: `Files in Trash will be deleted permanently after ${retentionDays} days.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Storage settings were not updated",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingStorage(false);
+    }
+  };
+
   const tabs = [
     { id: "workspace", label: "Workspace", icon: Building2 },
     { id: "team", label: "Team", icon: Users },
     { id: "brands", label: "Brands", icon: Palette },
+    { id: "storage", label: "Storage", icon: HardDrive },
     { id: "publishing", label: "Publishing", icon: Send },
     { id: "integrations", label: "Integrations", icon: Smartphone },
     { id: "security", label: "Security", icon: Shield },
@@ -222,10 +257,76 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {activeTab === "storage" && (
+            <section className="surface-base overflow-hidden">
+              <div className="p-6 border-b border-border-subtle">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-surface-strong flex items-center justify-center shrink-0">
+                    <Trash2 className="w-4 h-4 text-text-secondary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-text-primary">Media Trash</h2>
+                    <p className="text-xs text-text-tertiary mt-1 max-w-2xl">
+                      Deleted files can be restored during the retention period. After that, the database record,
+                      original file, and Instagram rendition are removed permanently from Vercel Blob.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-3">
+                    Permanently delete files after
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                    {([7, 30] as const).map((days) => (
+                      <button
+                        key={days}
+                        type="button"
+                        onClick={() => setRetentionOverride(days)}
+                        className={cn(
+                          "rounded-xl border p-4 text-left transition-colors",
+                          retentionDays === days
+                            ? "border-accent-primary bg-surface-hover"
+                            : "border-border-default bg-surface-subtle hover:border-border-strong"
+                        )}
+                      >
+                        <span className="text-sm font-semibold text-text-primary">{days} days</span>
+                        <span className="block text-xs text-text-tertiary mt-1">
+                          {days === 7 ? "Lower storage usage" : "More time to recover mistakes"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-subtle p-4 max-w-xl">
+                  <Clock3 className="w-4 h-4 text-text-tertiary mt-0.5 shrink-0" />
+                  <p className="text-xs text-text-tertiary leading-relaxed">
+                    Cleanup runs once per day. Changing this setting also recalculates the deletion date for files
+                    already in Trash. Files still used by content cannot be moved to Trash.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void saveStorageSettings()}
+                  disabled={savingStorage || !workspace}
+                  className="btn-primary"
+                >
+                  {savingStorage && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Storage Settings
+                </button>
+              </div>
+            </section>
+          )}
+
           {activeTab === "publishing" && (
             <section className="surface-base p-6 space-y-4">
               <h2 className="text-base font-semibold text-text-primary">Active Publishing Rules</h2>
-              <Fact label="Schedule processor" value="Runs every minute" />
+              <Fact label="Schedule processor" value="External trigger · every minute" />
+              <Fact label="Media Trash cleanup" value="Vercel · once daily" />
               <Fact label="Missed schedules" value="Fail safely after 24 hours" />
               <Fact label="Instagram media" value="Public URL with automatic JPEG normalization" />
               <Fact label="TikTok" value="Draft upload by default; finalize in TikTok" />

@@ -13,6 +13,6 @@ export default clerkMiddleware(async (auth) => {
 export const config = {
   matcher: [
     '/app/:path*',
-    '/api/((?!webhooks(?:/|$)|cron(?:/|$)|inngest(?:/|$)|social/instagram/callback(?:/|$)|social/tiktok/callback(?:/|$)).*)',
+    '/api/((?!health(?:/|$)|webhooks(?:/|$)|cron(?:/|$)|inngest(?:/|$)|social/instagram/callback(?:/|$)|social/tiktok/callback(?:/|$)).*)',
   ],
 }

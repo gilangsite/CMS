@@ -7,19 +7,19 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  clerkId    String   @unique @map("clerk_id")
-  email      String   @unique
-  name       String?
-  avatarUrl  String?  @map("avatar_url")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  clerkId   String   @unique @map("clerk_id")
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   workspaceMembers WorkspaceMember[]
-  uploadedMedia    MediaAsset[]       @relation("UploadedBy")
-  createdContent   ContentItem[]      @relation("CreatedBy")
-  assignedContent  ContentItem[]      @relation("AssignedTo")
-  approvedContent  ContentItem[]      @relation("ApprovedBy")
+  uploadedMedia    MediaAsset[]      @relation("UploadedBy")
+  createdContent   ContentItem[]     @relation("CreatedBy")
+  assignedContent  ContentItem[]     @relation("AssignedTo")
+  approvedContent  ContentItem[]     @relation("ApprovedBy")
   approvalComments ApprovalComment[]
   activityLogs     ActivityLog[]
 
@@ -27,30 +27,31 @@ model User {
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdBy String?  @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String   @unique
+  createdBy               String?  @map("created_by")
+  mediaTrashRetentionDays Int      @default(30) @map("media_trash_retention_days")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
 
-  members          WorkspaceMember[]
-  brands           Brand[]
-  socialAccounts   SocialAccount[]
-  campaigns        Campaign[]
-  mediaAssets      MediaAsset[]
-  contentItems     ContentItem[]
-  activityLogs     ActivityLog[]
+  members        WorkspaceMember[]
+  brands         Brand[]
+  socialAccounts SocialAccount[]
+  campaigns      Campaign[]
+  mediaAssets    MediaAsset[]
+  contentItems   ContentItem[]
+  activityLogs   ActivityLog[]
 
   @@map("workspaces")
 }
 
 model WorkspaceMember {
-  id          String    @id @default(cuid())
-  workspaceId String    @map("workspace_id")
-  userId      String    @map("user_id")
-  role        Role      @default(VIEWER)
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  userId      String   @map("user_id")
+  role        Role     @default(VIEWER)
+  createdAt   DateTime @default(now()) @map("created_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -79,7 +80,7 @@ model Brand {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   socialAccounts SocialAccount[]
   campaigns      Campaign[]
   contentItems   ContentItem[]
@@ -89,23 +90,23 @@ model Brand {
 }
 
 model SocialAccount {
-  id                   String        @id @default(cuid())
-  workspaceId          String        @map("workspace_id")
-  brandId              String?       @map("brand_id")
-  platform             Platform
-  platformAccountId    String        @map("platform_account_id")
-  username             String?
-  displayName          String?       @map("display_name")
-  avatarUrl            String?       @map("avatar_url")
-  accountType          String?       @map("account_type")
-  accessTokenEncrypted String        @map("access_token_encrypted")
-  refreshTokenEncrypted String?      @map("refresh_token_encrypted")
-  tokenExpiresAt       DateTime?     @map("token_expires_at")
-  scopes               String[]
-  status               AccountStatus @default(CONNECTED)
-  lastSyncedAt         DateTime?     @map("last_synced_at")
-  createdAt            DateTime      @default(now()) @map("created_at")
-  updatedAt            DateTime      @updatedAt @map("updated_at")
+  id                    String        @id @default(cuid())
+  workspaceId           String        @map("workspace_id")
+  brandId               String?       @map("brand_id")
+  platform              Platform
+  platformAccountId     String        @map("platform_account_id")
+  username              String?
+  displayName           String?       @map("display_name")
+  avatarUrl             String?       @map("avatar_url")
+  accountType           String?       @map("account_type")
+  accessTokenEncrypted  String        @map("access_token_encrypted")
+  refreshTokenEncrypted String?       @map("refresh_token_encrypted")
+  tokenExpiresAt        DateTime?     @map("token_expires_at")
+  scopes                String[]
+  status                AccountStatus @default(CONNECTED)
+  lastSyncedAt          DateTime?     @map("last_synced_at")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
 
   workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   brand         Brand?         @relation(fields: [brandId], references: [id], onDelete: SetNull)
@@ -151,48 +152,53 @@ model Campaign {
 }
 
 model MediaAsset {
-  id              String   @id @default(cuid())
-  workspaceId     String   @map("workspace_id")
-  uploadedBy      String?  @map("uploaded_by")
-  fileUrl         String   @map("file_url")
-  thumbnailUrl    String?  @map("thumbnail_url")
-  fileName        String?  @map("file_name")
-  mimeType        String?  @map("mime_type")
-  fileSize        BigInt?  @map("file_size")
+  id              String    @id @default(cuid())
+  workspaceId     String    @map("workspace_id")
+  uploadedBy      String?   @map("uploaded_by")
+  fileUrl         String    @map("file_url")
+  thumbnailUrl    String?   @map("thumbnail_url")
+  fileName        String?   @map("file_name")
+  mimeType        String?   @map("mime_type")
+  fileSize        BigInt?   @map("file_size")
   width           Int?
   height          Int?
-  durationSeconds Float?   @map("duration_seconds")
+  durationSeconds Float?    @map("duration_seconds")
   checksum        String?
-  storageProvider String?  @default("vercel_blob") @map("storage_provider")
-  createdAt       DateTime @default(now()) @map("created_at")
+  storageProvider String?   @default("vercel_blob") @map("storage_provider")
+  deletedAt       DateTime? @map("deleted_at")
+  purgeAfter      DateTime? @map("purge_after")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  uploader       User?           @relation("UploadedBy", fields: [uploadedBy], references: [id])
-  contentAssets  ContentAsset[]
-  coverForPosts  PlatformPost[]  @relation("CoverAsset")
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploader      User?          @relation("UploadedBy", fields: [uploadedBy], references: [id])
+  contentAssets ContentAsset[]
+  coverForPosts PlatformPost[] @relation("CoverAsset")
 
   @@index([workspaceId])
   @@index([uploadedBy])
+  @@index([workspaceId, deletedAt])
+  @@index([purgeAfter])
   @@map("media_assets")
 }
 
 model ContentItem {
-  id              String          @id @default(cuid())
-  workspaceId     String          @map("workspace_id")
-  brandId         String?         @map("brand_id")
-  campaignId      String?         @map("campaign_id")
-  title           String?
-  internalNotes   String?         @map("internal_notes")
-  approvalStatus  ApprovalStatus  @default(DRAFT) @map("approval_status")
+  id               String           @id @default(cuid())
+  workspaceId      String           @map("workspace_id")
+  brandId          String?          @map("brand_id")
+  campaignId       String?          @map("campaign_id")
+  title            String?
+  internalNotes    String?          @map("internal_notes")
+  approvalStatus   ApprovalStatus   @default(DRAFT) @map("approval_status")
   publishingStatus PublishingStatus @default(DRAFT) @map("publishing_status")
-  createdBy       String?         @map("created_by")
-  assignedTo      String?         @map("assigned_to")
-  approvedBy      String?         @map("approved_by")
-  approvedAt      DateTime?       @map("approved_at")
-  scheduledAt     DateTime?       @map("scheduled_at")
-  timezone        String          @default("Asia/Jakarta")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  createdBy        String?          @map("created_by")
+  assignedTo       String?          @map("assigned_to")
+  approvedBy       String?          @map("approved_by")
+  approvedAt       DateTime?        @map("approved_at")
+  scheduledAt      DateTime?        @map("scheduled_at")
+  timezone         String           @default("Asia/Jakarta")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   brand            Brand?            @relation(fields: [brandId], references: [id], onDelete: SetNull)
@@ -252,42 +258,42 @@ model ContentAsset {
 }
 
 model PlatformPost {
-  id                        String           @id @default(cuid())
-  contentItemId             String           @map("content_item_id")
-  socialAccountId           String           @map("social_account_id")
-  platform                  Platform
-  destination               String
-  caption                   String?
-  hashtags                  String[]
-  mentions                  String[]
-  collaborators             String[]         @default([])
-  coverAssetId              String?          @map("cover_asset_id")
-  coverTimestampMs          Int?             @map("cover_timestamp_ms")
-  musicPlan                 String?          @map("music_plan")
-  postMode                  PostMode         @map("post_mode")
-  privacyLevel              String?          @map("privacy_level")
-  allowComments             Boolean?         @map("allow_comments")
-  allowDuet                 Boolean?         @map("allow_duet")
-  allowStitch               Boolean?         @map("allow_stitch")
-  commercialDisclosureEnabled Boolean        @default(false) @map("commercial_disclosure_enabled")
-  commercialDisclosureType  String?          @map("commercial_disclosure_type")
-  musicUsageConfirmed       Boolean          @default(false) @map("music_usage_confirmed")
-  userConsentConfirmed      Boolean          @default(false) @map("user_consent_confirmed")
-  scheduledAt               DateTime?        @map("scheduled_at")
-  status                    PublishingStatus @default(DRAFT)
-  platformMediaId           String?          @map("platform_media_id")
-  platformPostUrl           String?          @map("platform_post_url")
-  errorCode                 String?          @map("error_code")
-  errorMessage              String?          @map("error_message")
-  lastAttemptAt             DateTime?        @map("last_attempt_at")
-  publishedAt               DateTime?        @map("published_at")
-  createdAt                 DateTime         @default(now()) @map("created_at")
-  updatedAt                 DateTime         @updatedAt @map("updated_at")
+  id                          String           @id @default(cuid())
+  contentItemId               String           @map("content_item_id")
+  socialAccountId             String           @map("social_account_id")
+  platform                    Platform
+  destination                 String
+  caption                     String?
+  hashtags                    String[]
+  mentions                    String[]
+  collaborators               String[]         @default([])
+  coverAssetId                String?          @map("cover_asset_id")
+  coverTimestampMs            Int?             @map("cover_timestamp_ms")
+  musicPlan                   String?          @map("music_plan")
+  postMode                    PostMode         @map("post_mode")
+  privacyLevel                String?          @map("privacy_level")
+  allowComments               Boolean?         @map("allow_comments")
+  allowDuet                   Boolean?         @map("allow_duet")
+  allowStitch                 Boolean?         @map("allow_stitch")
+  commercialDisclosureEnabled Boolean          @default(false) @map("commercial_disclosure_enabled")
+  commercialDisclosureType    String?          @map("commercial_disclosure_type")
+  musicUsageConfirmed         Boolean          @default(false) @map("music_usage_confirmed")
+  userConsentConfirmed        Boolean          @default(false) @map("user_consent_confirmed")
+  scheduledAt                 DateTime?        @map("scheduled_at")
+  status                      PublishingStatus @default(DRAFT)
+  platformMediaId             String?          @map("platform_media_id")
+  platformPostUrl             String?          @map("platform_post_url")
+  errorCode                   String?          @map("error_code")
+  errorMessage                String?          @map("error_message")
+  lastAttemptAt               DateTime?        @map("last_attempt_at")
+  publishedAt                 DateTime?        @map("published_at")
+  createdAt                   DateTime         @default(now()) @map("created_at")
+  updatedAt                   DateTime         @updatedAt @map("updated_at")
 
-  contentItem     ContentItem      @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
-  socialAccount   SocialAccount    @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
-  coverAsset      MediaAsset?      @relation("CoverAsset", fields: [coverAssetId], references: [id], onDelete: SetNull)
-  publishingJobs  PublishingJob[]
+  contentItem        ContentItem         @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  socialAccount      SocialAccount       @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  coverAsset         MediaAsset?         @relation("CoverAsset", fields: [coverAssetId], references: [id], onDelete: SetNull)
+  publishingJobs     PublishingJob[]
   analyticsSnapshots AnalyticsSnapshot[]
 
   @@index([contentItemId])
@@ -305,22 +311,22 @@ enum PostMode {
 }
 
 model PublishingJob {
-  id             String     @id @default(cuid())
-  platformPostId String     @map("platform_post_id")
-  jobType        JobType    @map("job_type")
-  status         JobStatus  @default(QUEUED)
-  attempts       Int        @default(0)
-  maxAttempts    Int        @default(3) @map("max_attempts")
-  scheduledFor   DateTime   @default(now()) @map("scheduled_for")
-  lockedAt       DateTime?  @map("locked_at")
-  lockedBy       String?    @map("locked_by")
-  errorCode      String?    @map("error_code")
-  errorMessage   String?    @map("error_message")
+  id             String    @id @default(cuid())
+  platformPostId String    @map("platform_post_id")
+  jobType        JobType   @map("job_type")
+  status         JobStatus @default(QUEUED)
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(3) @map("max_attempts")
+  scheduledFor   DateTime  @default(now()) @map("scheduled_for")
+  lockedAt       DateTime? @map("locked_at")
+  lockedBy       String?   @map("locked_by")
+  errorCode      String?   @map("error_code")
+  errorMessage   String?   @map("error_message")
   payload        Json?
   result         Json?
-  idempotencyKey String?    @unique @map("idempotency_key")
-  createdAt      DateTime   @default(now()) @map("created_at")
-  updatedAt      DateTime   @updatedAt @map("updated_at")
+  idempotencyKey String?   @unique @map("idempotency_key")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   platformPost PlatformPost @relation(fields: [platformPostId], references: [id], onDelete: Cascade)
 

@@ -24,10 +24,10 @@ function authorizeCron(req: NextRequest): NextResponse | null {
 }
 
 /**
- * Runs every minute (vercel.json). Due posts are processed in this request,
- * rather than merely forwarded to an external worker that may not be
- * registered. Old schedules are failed safely instead of publishing stale
- * content days or months later.
+ * Called every minute by the external Hobby-plan scheduler. Due posts are
+ * processed in this request rather than merely forwarded to an external
+ * worker that may not be registered. Old schedules are failed safely instead
+ * of publishing stale content days or months later.
  */
 export async function GET(req: NextRequest) {
   const authError = authorizeCron(req)

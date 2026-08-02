@@ -29,7 +29,9 @@ export async function validateContentReferences(
         })
       : null,
     mediaIds.length
-      ? prisma.mediaAsset.count({ where: { id: { in: mediaIds }, workspaceId } })
+      ? prisma.mediaAsset.count({
+          where: { id: { in: mediaIds }, workspaceId, deletedAt: null },
+        })
       : 0,
     accountIds.length
       ? prisma.socialAccount.findMany({
@@ -41,7 +43,9 @@ export async function validateContentReferences(
 
   if (input.brandId && !brand) return 'The selected brand does not belong to this workspace'
   if (input.campaignId && !campaign) return 'The selected campaign does not belong to this workspace'
-  if (mediaCount !== mediaIds.length) return 'One or more media files do not belong to this workspace'
+  if (mediaCount !== mediaIds.length) {
+    return 'One or more media files are unavailable or have been moved to Trash'
+  }
 
   const platformsSeen = new Set<string>()
   for (const post of platformPosts) {

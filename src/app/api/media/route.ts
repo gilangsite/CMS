@@ -17,9 +17,14 @@ export async function GET(req: NextRequest) {
     const member = await prisma.workspaceMember.findFirst({ where: { workspaceId, userId: user.id } })
     if (!member) return apiError('Not a member of this workspace', 403)
 
+    const view = req.nextUrl.searchParams.get('view')
+    const trash = view === 'trash'
     const assets = await prisma.mediaAsset.findMany({
-      where: { workspaceId },
-      orderBy: { createdAt: 'desc' },
+      where: {
+        workspaceId,
+        deletedAt: trash ? { not: null } : null,
+      },
+      orderBy: trash ? { deletedAt: 'desc' } : { createdAt: 'desc' },
       take: 100,
     })
 
